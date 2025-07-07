@@ -2,7 +2,8 @@ from fastapi import APIRouter, HTTPException, Depends, Request
 from typing import List, Dict, Any
 from datetime import datetime, timedelta
 from bson import ObjectId
-from server import db, get_current_user
+from database import db
+from server import get_current_user
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
