@@ -891,6 +891,29 @@ async def startup_event():
     await init_db()
     logger.info("QuizBaaji API started successfully")
 
+# Include routers
+from quiz_routes import router as quiz_router
+from admin_routes import router as admin_router
+from payment_routes import router as payment_router
+
+app.include_router(quiz_router)
+app.include_router(admin_router)
+app.include_router(payment_router)
+
+# Health check endpoint
+@app.get("/api/health")
+async def health_check():
+    return {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "version": "1.0.0",
+        "services": {
+            "database": "connected",
+            "stripe": "configured" if STRIPE_SECRET_KEY else "not configured",
+            "supabase": "connected" if supabase else "not configured"
+        }
+    }
+
 @app.put("/api/user/kyc")
 async def update_kyc(request: Request, current_user: dict = Depends(get_current_user)):
     """Update KYC information"""
