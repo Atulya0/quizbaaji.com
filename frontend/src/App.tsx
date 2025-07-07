@@ -13,6 +13,23 @@ import RefundPolicy from './pages/refundpolicy';
 import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
 import QuizPage from './pages/QuizPage';
+import AdminDashboard from './pages/AdminDashboard';
+import QuizResults from './pages/QuizResults';
+
+// Admin Route Protection Component
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  if (user.role !== 'admin') {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  return <>{children}</>;
+}
 
 function AppContent() {
   const { user } = useAuth();
@@ -47,6 +64,22 @@ function AppContent() {
                 <ProtectedRoute>
                   <QuizPage />
                 </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/quiz-results/:sessionId" 
+              element={
+                <ProtectedRoute>
+                  <QuizResults />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin" 
+              element={
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>
               } 
             />
             <Route path="*" element={<Navigate to="/" replace />} />
