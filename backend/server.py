@@ -566,7 +566,330 @@ async def get_user_profile(current_user: dict = Depends(get_current_user)):
         "created_at": current_user.get("created_at"),
         "last_login": current_user.get("last_login")
     }
-    return user_profile
+# Include the rest of the functions and startup event
+from websocket_manager import websocket_manager
+
+# Sample data creation
+async def create_sample_data():
+    """Create sample tournaments and questions"""
+    try:
+        # Check if sample data already exists
+        existing_questions = await db.questions.count_documents({})
+        if existing_questions > 0:
+            logger.info("Sample data already exists")
+            return
+        
+        # Enhanced sample questions with better variety
+        categories = {
+            "general": [
+                {
+                    "question_text": "What is the capital of India?",
+                    "options": ["Mumbai", "New Delhi", "Kolkata", "Chennai"],
+                    "correct_answer": 1,
+                    "explanation": "New Delhi is the capital city of India.",
+                    "difficulty": "easy"
+                },
+                {
+                    "question_text": "Which is the largest ocean in the world?",
+                    "options": ["Atlantic Ocean", "Indian Ocean", "Arctic Ocean", "Pacific Ocean"],
+                    "correct_answer": 3,
+                    "explanation": "The Pacific Ocean is the largest ocean covering about 63 million square miles.",
+                    "difficulty": "easy"
+                },
+                {
+                    "question_text": "How many continents are there in the world?",
+                    "options": ["5", "6", "7", "8"],
+                    "correct_answer": 2,
+                    "explanation": "There are 7 continents: Asia, Africa, North America, South America, Antarctica, Europe, and Australia.",
+                    "difficulty": "easy"
+                }
+            ],
+            "science": [
+                {
+                    "question_text": "What is the chemical symbol for water?",
+                    "options": ["H2O", "CO2", "NaCl", "O2"],
+                    "correct_answer": 0,
+                    "explanation": "H2O represents water molecule with 2 hydrogen atoms and 1 oxygen atom.",
+                    "difficulty": "easy"
+                },
+                {
+                    "question_text": "What is the speed of light in vacuum?",
+                    "options": ["300,000 km/s", "150,000 km/s", "450,000 km/s", "600,000 km/s"],
+                    "correct_answer": 0,
+                    "explanation": "The speed of light in vacuum is approximately 299,792,458 meters per second or about 300,000 km/s.",
+                    "difficulty": "medium"
+                },
+                {
+                    "question_text": "Which gas makes up about 78% of Earth's atmosphere?",
+                    "options": ["Oxygen", "Carbon Dioxide", "Nitrogen", "Argon"],
+                    "correct_answer": 2,
+                    "explanation": "Nitrogen makes up about 78% of Earth's atmosphere, while oxygen is about 21%.",
+                    "difficulty": "medium"
+                }
+            ],
+            "history": [
+                {
+                    "question_text": "In which year did India gain independence?",
+                    "options": ["1945", "1947", "1950", "1952"],
+                    "correct_answer": 1,
+                    "explanation": "India gained independence from British rule on August 15, 1947.",
+                    "difficulty": "easy"
+                },
+                {
+                    "question_text": "Who was the first President of India?",
+                    "options": ["Jawaharlal Nehru", "Dr. Rajendra Prasad", "Dr. A.P.J. Abdul Kalam", "Dr. Sarvepalli Radhakrishnan"],
+                    "correct_answer": 1,
+                    "explanation": "Dr. Rajendra Prasad was the first President of India, serving from 1950 to 1962.",
+                    "difficulty": "medium"
+                },
+                {
+                    "question_text": "The Battle of Plassey was fought in which year?",
+                    "options": ["1757", "1764", "1771", "1780"],
+                    "correct_answer": 0,
+                    "explanation": "The Battle of Plassey was fought on June 23, 1757, marking the beginning of British rule in India.",
+                    "difficulty": "hard"
+                }
+            ],
+            "sports": [
+                {
+                    "question_text": "How many players are there in a cricket team?",
+                    "options": ["10", "11", "12", "13"],
+                    "correct_answer": 1,
+                    "explanation": "A cricket team consists of 11 players on the field at any given time.",
+                    "difficulty": "easy"
+                },
+                {
+                    "question_text": "In which sport is the term 'slam dunk' used?",
+                    "options": ["Football", "Basketball", "Tennis", "Volleyball"],
+                    "correct_answer": 1,
+                    "explanation": "Slam dunk is a basketball term where a player jumps and scores by putting the ball directly through the basket.",
+                    "difficulty": "easy"
+                },
+                {
+                    "question_text": "Which country hosted the 2016 Summer Olympics?",
+                    "options": ["China", "UK", "Brazil", "Japan"],
+                    "correct_answer": 2,
+                    "explanation": "Brazil hosted the 2016 Summer Olympics in Rio de Janeiro.",
+                    "difficulty": "medium"
+                }
+            ],
+            "entertainment": [
+                {
+                    "question_text": "Who directed the movie 'Sholay'?",
+                    "options": ["Ramesh Sippy", "Yash Chopra", "Raj Kapoor", "Guru Dutt"],
+                    "correct_answer": 0,
+                    "explanation": "Ramesh Sippy directed the classic Bollywood movie 'Sholay' released in 1975.",
+                    "difficulty": "medium"
+                },
+                {
+                    "question_text": "Which movie won the first Academy Award for Best Picture?",
+                    "options": ["Wings", "Sunrise", "The Jazz Singer", "Metropolis"],
+                    "correct_answer": 0,
+                    "explanation": "Wings (1927) won the first Academy Award for Best Picture at the 1st Academy Awards ceremony.",
+                    "difficulty": "hard"
+                },
+                {
+                    "question_text": "Who composed the music for the movie 'Titanic'?",
+                    "options": ["Hans Zimmer", "John Williams", "James Horner", "Danny Elfman"],
+                    "correct_answer": 2,
+                    "explanation": "James Horner composed the music for Titanic, including the famous song 'My Heart Will Go On'.",
+                    "difficulty": "medium"
+                }
+            ]
+        }
+        
+        sample_questions = []
+        
+        # Create enhanced questions for each category
+        for category, base_questions in categories.items():
+            # Add the base questions
+            for q in base_questions:
+                question = {
+                    "_id": ObjectId(),
+                    "category": category,
+                    "question_text": q["question_text"],
+                    "options": q["options"],
+                    "correct_answer": q["correct_answer"],
+                    "explanation": q["explanation"],
+                    "difficulty": q["difficulty"],
+                    "created_at": datetime.utcnow(),
+                    "created_by": "system"
+                }
+                sample_questions.append(question)
+            
+            # Generate additional questions to reach 50 per category
+            for i in range(len(base_questions), 50):
+                question = {
+                    "_id": ObjectId(),
+                    "category": category,
+                    "question_text": f"Sample {category} question {i+1}. What is the most appropriate answer?",
+                    "options": [
+                        f"Option A for {category} question {i+1}",
+                        f"Option B for {category} question {i+1}",
+                        f"Option C for {category} question {i+1}",
+                        f"Option D for {category} question {i+1}"
+                    ],
+                    "correct_answer": i % 4,  # Randomize correct answers
+                    "explanation": f"This is the explanation for {category} question {i+1}. The correct answer provides the most accurate information.",
+                    "difficulty": ["easy", "medium", "hard"][i % 3],
+                    "created_at": datetime.utcnow(),
+                    "created_by": "system"
+                }
+                sample_questions.append(question)
+        
+        await db.questions.insert_many(sample_questions)
+        logger.info(f"Created {len(sample_questions)} sample questions")
+        
+        # Enhanced sample tournaments
+        now = datetime.utcnow()
+        sample_tournaments = [
+            {
+                "_id": ObjectId(),
+                "name": "General Knowledge Championship",
+                "description": "Test your general knowledge with exciting questions from various topics",
+                "category": "general",
+                "entry_fee": float(ENTRY_FEE_RUPEES),
+                "prize_pool": 1000.0,
+                "max_participants": 100,
+                "start_time": now + timedelta(minutes=5),
+                "end_time": now + timedelta(hours=2),
+                "duration_minutes": QUIZ_DURATION_MINUTES,
+                "questions_count": QUESTIONS_PER_QUIZ,
+                "status": "upcoming",
+                "participants": [],
+                "created_at": now,
+                "created_by": "system"
+            },
+            {
+                "_id": ObjectId(),
+                "name": "Science Quiz Battle",
+                "description": "Challenge yourself with fascinating science questions",
+                "category": "science",
+                "entry_fee": float(ENTRY_FEE_RUPEES),
+                "prize_pool": 1500.0,
+                "max_participants": 75,
+                "start_time": now + timedelta(hours=1),
+                "end_time": now + timedelta(hours=3),
+                "duration_minutes": QUIZ_DURATION_MINUTES,
+                "questions_count": QUESTIONS_PER_QUIZ,
+                "status": "upcoming",
+                "participants": [],
+                "created_at": now,
+                "created_by": "system"
+            },
+            {
+                "_id": ObjectId(),
+                "name": "History Masters",
+                "description": "Dive deep into historical events and personalities",
+                "category": "history",
+                "entry_fee": float(ENTRY_FEE_RUPEES),
+                "prize_pool": 1200.0,
+                "max_participants": 50,
+                "start_time": now + timedelta(hours=2),
+                "end_time": now + timedelta(hours=4),
+                "duration_minutes": QUIZ_DURATION_MINUTES,
+                "questions_count": QUESTIONS_PER_QUIZ,
+                "status": "upcoming",
+                "participants": [],
+                "created_at": now,
+                "created_by": "system"
+            },
+            {
+                "_id": ObjectId(),
+                "name": "Sports Trivia Challenge",
+                "description": "Show your sports knowledge across different games",
+                "category": "sports",
+                "entry_fee": float(ENTRY_FEE_RUPEES),
+                "prize_pool": 800.0,
+                "max_participants": 60,
+                "start_time": now + timedelta(hours=3),
+                "end_time": now + timedelta(hours=5),
+                "duration_minutes": QUIZ_DURATION_MINUTES,
+                "questions_count": QUESTIONS_PER_QUIZ,
+                "status": "upcoming",
+                "participants": [],
+                "created_at": now,
+                "created_by": "system"
+            },
+            {
+                "_id": ObjectId(),
+                "name": "Entertainment Quiz Night",
+                "description": "Test your knowledge of movies, music, and pop culture",
+                "category": "entertainment",
+                "entry_fee": float(ENTRY_FEE_RUPEES),
+                "prize_pool": 900.0,
+                "max_participants": 80,
+                "start_time": now + timedelta(hours=4),
+                "end_time": now + timedelta(hours=6),
+                "duration_minutes": QUIZ_DURATION_MINUTES,
+                "questions_count": QUESTIONS_PER_QUIZ,
+                "status": "upcoming",
+                "participants": [],
+                "created_at": now,
+                "created_by": "system"
+            }
+        ]
+        
+        await db.tournaments.insert_many(sample_tournaments)
+        logger.info(f"Created {len(sample_tournaments)} sample tournaments")
+        
+    except Exception as e:
+        logger.error(f"Error creating sample data: {e}")
+
+# Database initialization
+async def init_db():
+    """Initialize database with indexes and admin user"""
+    try:
+        # Create indexes for better performance
+        await db.users.create_index("email", unique=True)
+        await db.users.create_index("google_id", unique=True, sparse=True)
+        await db.tournaments.create_index("start_time")
+        await db.tournaments.create_index("category")
+        await db.tournaments.create_index("status")
+        await db.questions.create_index("category")
+        await db.quiz_sessions.create_index("user_id")
+        await db.quiz_sessions.create_index("tournament_id")
+        await db.payments.create_index("payment_intent_id", unique=True)
+        await db.payments.create_index("user_id")
+        await db.wallet_transactions.create_index("user_id")
+        await db.tournament_entries.create_index([("tournament_id", 1), ("user_id", 1)], unique=True)
+        
+        logger.info("Database indexes created successfully")
+        
+        # Create admin user if not exists
+        admin_email = os.getenv("ADMIN_EMAIL", "admin@quizbaaji.com")
+        admin_password = os.getenv("ADMIN_PASSWORD", "admin123")
+        
+        existing_admin = await db.users.find_one({"email": admin_email})
+        if not existing_admin:
+            admin_user = {
+                "_id": ObjectId(),
+                "email": admin_email,
+                "password": pwd_context.hash(admin_password),
+                "name": "QuizBaaji Admin",
+                "role": "admin",
+                "is_verified": True,
+                "created_at": datetime.utcnow(),
+                "wallet_balance": 0.0,
+                "kyc_verified": True,
+                "kyc_data": None
+            }
+            await db.users.insert_one(admin_user)
+            logger.info(f"Admin user created: {admin_email}")
+        
+        # Create sample data
+        await create_sample_data()
+        
+        logger.info("Database initialized successfully")
+        
+    except Exception as e:
+        logger.error(f"Database initialization error: {e}")
+
+# Startup event
+@app.on_event("startup")
+async def startup_event():
+    await init_db()
+    logger.info("QuizBaaji API started successfully")
 
 @app.put("/api/user/kyc")
 async def update_kyc(request: Request, current_user: dict = Depends(get_current_user)):
