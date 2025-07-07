@@ -891,15 +891,6 @@ async def startup_event():
     await init_db()
     logger.info("QuizBaaji API started successfully")
 
-# Include routers
-from quiz_routes import router as quiz_router
-from admin_routes import router as admin_router
-from payment_routes import router as payment_router
-
-app.include_router(quiz_router)
-app.include_router(admin_router)
-app.include_router(payment_router)
-
 # Health check endpoint
 @app.get("/api/health")
 async def health_check():
