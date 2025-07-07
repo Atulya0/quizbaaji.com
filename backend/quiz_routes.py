@@ -5,8 +5,8 @@ from datetime import datetime, timedelta
 from bson import ObjectId
 import asyncio
 import logging
-from .server import db, get_current_user
-from .websocket_manager import websocket_manager
+from server import db, get_current_user
+from websocket_manager import websocket_manager
 
 router = APIRouter(prefix="/api/quiz", tags=["quiz"])
 logger = logging.getLogger(__name__)
