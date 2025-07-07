@@ -4,7 +4,8 @@ import stripe
 from datetime import datetime, timedelta
 from bson import ObjectId
 import logging
-from server import db, get_current_user, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
+from database import db
+from server import get_current_user, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
 
 router = APIRouter(prefix="/api/payments", tags=["payments"])
 
