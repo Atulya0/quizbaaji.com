@@ -46,7 +46,14 @@ db = client.quizbaaji
 # Supabase setup
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+supabase: Optional[Client] = None
+
+# Initialize Supabase client
+try:
+    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+except Exception as e:
+    print(f"Supabase initialization error: {e}")
+    supabase = None
 
 # Stripe setup
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
