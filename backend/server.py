@@ -1105,6 +1105,15 @@ async def get_realtime_stats():
 
 # Run the server
 if __name__ == "__main__":
+    # Include routers after everything is initialized
+    from quiz_routes import router as quiz_router
+    from admin_routes import router as admin_router
+    from payment_routes import router as payment_router
+
+    app.include_router(quiz_router)
+    app.include_router(admin_router)
+    app.include_router(payment_router)
+    
     uvicorn.run(
         app, 
         host=os.getenv("HOST", "0.0.0.0"), 
