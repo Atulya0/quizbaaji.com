@@ -127,6 +127,159 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     
     return user
 
+# Sample data creation
+async def create_sample_data():
+    """Create sample tournaments and questions"""
+    try:
+        # Check if sample data already exists
+        existing_questions = await db.questions.count_documents({})
+        if existing_questions > 0:
+            return
+        
+        # Sample questions
+        sample_questions = [
+            {
+                "_id": ObjectId(),
+                "category": "general",
+                "question_text": "What is the capital of India?",
+                "options": ["Mumbai", "New Delhi", "Kolkata", "Chennai"],
+                "correct_answer": 1,
+                "explanation": "New Delhi is the capital of India.",
+                "difficulty": "easy",
+                "created_at": datetime.utcnow(),
+                "created_by": "system"
+            },
+            {
+                "_id": ObjectId(),
+                "category": "science",
+                "question_text": "What is the chemical symbol for water?",
+                "options": ["H2O", "CO2", "NaCl", "O2"],
+                "correct_answer": 0,
+                "explanation": "H2O is the chemical formula for water.",
+                "difficulty": "easy",
+                "created_at": datetime.utcnow(),
+                "created_by": "system"
+            },
+            {
+                "_id": ObjectId(),
+                "category": "history",
+                "question_text": "In which year did India gain independence?",
+                "options": ["1945", "1947", "1950", "1952"],
+                "correct_answer": 1,
+                "explanation": "India gained independence on August 15, 1947.",
+                "difficulty": "medium",
+                "created_at": datetime.utcnow(),
+                "created_by": "system"
+            },
+            {
+                "_id": ObjectId(),
+                "category": "sports",
+                "question_text": "How many players are there in a cricket team?",
+                "options": ["10", "11", "12", "13"],
+                "correct_answer": 1,
+                "explanation": "A cricket team has 11 players.",
+                "difficulty": "easy",
+                "created_at": datetime.utcnow(),
+                "created_by": "system"
+            },
+            {
+                "_id": ObjectId(),
+                "category": "entertainment",
+                "question_text": "Who directed the movie 'Sholay'?",
+                "options": ["Ramesh Sippy", "Yash Chopra", "Raj Kapoor", "Guru Dutt"],
+                "correct_answer": 0,
+                "explanation": "Ramesh Sippy directed the classic movie 'Sholay'.",
+                "difficulty": "medium",
+                "created_at": datetime.utcnow(),
+                "created_by": "system"
+            }
+        ]
+        
+        # Add more questions for each category
+        categories = ["general", "science", "history", "sports", "entertainment"]
+        for category in categories:
+            for i in range(30):  # Add 30 questions per category
+                question = {
+                    "_id": ObjectId(),
+                    "category": category,
+                    "question_text": f"Sample {category} question {i+1}. What is the correct answer?",
+                    "options": [
+                        f"Option A for {category} {i+1}",
+                        f"Option B for {category} {i+1}",
+                        f"Option C for {category} {i+1}",
+                        f"Option D for {category} {i+1}"
+                    ],
+                    "correct_answer": i % 4,  # Randomize correct answers
+                    "explanation": f"This is the explanation for {category} question {i+1}.",
+                    "difficulty": ["easy", "medium", "hard"][i % 3],
+                    "created_at": datetime.utcnow(),
+                    "created_by": "system"
+                }
+                sample_questions.append(question)
+        
+        await db.questions.insert_many(sample_questions)
+        
+        # Sample tournaments
+        sample_tournaments = [
+            {
+                "_id": ObjectId(),
+                "name": "General Knowledge Championship",
+                "description": "Test your general knowledge with exciting questions",
+                "category": "general",
+                "entry_fee": 39.0,
+                "prize_pool": 1000.0,
+                "max_participants": 100,
+                "start_time": datetime.utcnow() + timedelta(hours=1),
+                "end_time": datetime.utcnow() + timedelta(hours=2),
+                "duration_minutes": 5,
+                "questions_count": 30,
+                "status": "upcoming",
+                "participants": [],
+                "created_at": datetime.utcnow(),
+                "created_by": "system"
+            },
+            {
+                "_id": ObjectId(),
+                "name": "Science Quiz Battle",
+                "description": "Challenge yourself with science questions",
+                "category": "science",
+                "entry_fee": 49.0,
+                "prize_pool": 1500.0,
+                "max_participants": 50,
+                "start_time": datetime.utcnow() + timedelta(hours=2),
+                "end_time": datetime.utcnow() + timedelta(hours=3),
+                "duration_minutes": 5,
+                "questions_count": 30,
+                "status": "upcoming",
+                "participants": [],
+                "created_at": datetime.utcnow(),
+                "created_by": "system"
+            },
+            {
+                "_id": ObjectId(),
+                "name": "Sports Trivia Challenge",
+                "description": "Show your sports knowledge",
+                "category": "sports",
+                "entry_fee": 29.0,
+                "prize_pool": 800.0,
+                "max_participants": 75,
+                "start_time": datetime.utcnow() + timedelta(hours=3),
+                "end_time": datetime.utcnow() + timedelta(hours=4),
+                "duration_minutes": 5,
+                "questions_count": 30,
+                "status": "upcoming",
+                "participants": [],
+                "created_at": datetime.utcnow(),
+                "created_by": "system"
+            }
+        ]
+        
+        await db.tournaments.insert_many(sample_tournaments)
+        print("Sample data created successfully")
+        
+    except Exception as e:
+        print(f"Error creating sample data: {e}")
+
 # Database initialization
 async def init_db():
     """Initialize database with indexes and admin user"""
@@ -160,6 +313,9 @@ async def init_db():
             await db.users.insert_one(admin_user)
             print(f"Admin user created: {admin_email}")
         
+        # Create sample data
+        await create_sample_data()
+        
         print("Database initialized successfully")
     except Exception as e:
         print(f"Database initialization error: {e}")
@@ -168,6 +324,13 @@ async def init_db():
 @app.on_event("startup")
 async def startup_event():
     await init_db()
+
+# Include routers
+from quiz_routes import router as quiz_router
+from admin_routes import router as admin_router
+
+app.include_router(quiz_router)
+app.include_router(admin_router)
 
 # Health check endpoint
 @app.get("/api/health")
@@ -210,7 +373,7 @@ async def google_auth(request: Request):
                 "role": "user",
                 "is_verified": True,
                 "created_at": datetime.utcnow(),
-                "wallet_balance": 0.0,
+                "wallet_balance": 100.0,  # Give new users ₹100 bonus
                 "kyc_verified": False
             }
             await db.users.insert_one(new_user)
@@ -276,8 +439,8 @@ async def get_tournaments():
     """Get all active tournaments"""
     try:
         tournaments = await db.tournaments.find({
-            "status": "active",
-            "start_time": {"$gt": datetime.utcnow()}
+            "status": {"$in": ["upcoming", "active"]},
+            "start_time": {"$gt": datetime.utcnow() - timedelta(hours=1)}
         }).to_list(length=100)
         
         # Convert ObjectId to string
@@ -311,24 +474,34 @@ async def join_tournament(tournament_id: str, current_user: dict = Depends(get_c
         if current_user["wallet_balance"] < entry_fee:
             raise HTTPException(status_code=400, detail="Insufficient wallet balance")
         
-        # Create payment intent with Stripe
-        payment_intent = stripe.PaymentIntent.create(
-            amount=int(entry_fee * 100),  # Convert to cents
-            currency='usd',
-            metadata={
-                'tournament_id': tournament_id,
-                'user_id': str(current_user["_id"])
-            }
+        # Deduct entry fee from wallet
+        await db.users.update_one(
+            {"_id": current_user["_id"]},
+            {"$inc": {"wallet_balance": -entry_fee}}
         )
         
-        return {
-            "client_secret": payment_intent.client_secret,
-            "tournament": {
-                "id": str(tournament["_id"]),
-                "name": tournament["name"],
-                "entry_fee": entry_fee
-            }
+        # Create tournament entry
+        entry = {
+            "_id": ObjectId(),
+            "tournament_id": ObjectId(tournament_id),
+            "user_id": current_user["_id"],
+            "entry_fee": entry_fee,
+            "joined_at": datetime.utcnow(),
+            "quiz_session_id": None,
+            "final_score": None,
+            "rank": None,
+            "prize_amount": None
         }
+        
+        await db.tournament_entries.insert_one(entry)
+        
+        # Add participant to tournament
+        await db.tournaments.update_one(
+            {"_id": ObjectId(tournament_id)},
+            {"$push": {"participants": str(current_user["_id"])}}
+        )
+        
+        return {"message": "Tournament joined successfully", "entry_id": str(entry["_id"])}
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
